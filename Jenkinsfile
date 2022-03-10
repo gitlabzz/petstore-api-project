@@ -1,44 +1,45 @@
-if (currentBuild.changeSets.size() > 0) {
+node {
 
-    node {
+    def mvnHome
+    def branchName
+    def targetEnvironment
+    def pullRequest
+    def apimHost
 
-        def mvnHome
-        def branchName
-        def targetEnvironment
-        def pullRequest
-        def apimHost
-
-        stage('Initialize') {
-            branchName = BRANCH_NAME
-            echo "checking if it's a pull request branch!"
-            if (branchName.toUpperCase().startsWith("PR-")) {
-                echo "found pull request '${branchName}', so targetting it to the 'DEV' environment!!!"
-                pullRequest = branchName.substring(branchName.lastIndexOf("-") + 1)
-                echo "Pull request is   ========================================>  ${pullRequest}."
-            }
+    stage('Initialize') {
+        branchName = BRANCH_NAME
+        echo "checking if it's a pull request branch!"
+        if (branchName.toUpperCase().startsWith("PR-")) {
+            echo "found pull request '${branchName}', so targetting it to the 'DEV' environment!!!"
+            pullRequest = branchName.substring(branchName.lastIndexOf("-") + 1)
+            echo "Pull request is   ========================================>  ${pullRequest}."
         }
+    }
 
-        stage("Checkout Code (${pullRequest ? 'PR-' + pullRequest : branchName})") {
-            if (pullRequest) {
-                echo "Checking out pull request  ========================================> ${branchName}"
-                try {
-                    git branch: '${BRANCH_NAME}', credentialsId: '2bc605b8-3d32-4c7b-84e2-4d858bc31c46', url: 'https://github.com/gitlabzz/petstore-api-project.git'
-                } catch (exception) {
-                    sh '''
+    stage("Checkout Code (${pullRequest ? 'PR-' + pullRequest : branchName})") {
+        if (pullRequest) {
+            echo "Checking out pull request  ========================================> ${branchName}"
+            try {
+                git branch: '${BRANCH_NAME}', credentialsId: '2bc605b8-3d32-4c7b-84e2-4d858bc31c46', url: 'https://github.com/gitlabzz/petstore-api-project.git'
+            } catch (exception) {
+                sh '''
                     git fetch origin +refs/pull/''' + pullRequest + '''/merge
                     git checkout FETCH_HEAD
                 '''
-                    branchName = "dev"
-                    echo "targeting build for pull request ${pullRequest} to '${branchName}' environment"
-                }
-                echo "Check out for pull request '${BRANCH_NAME}' is successfully completed!"
-
-            } else {
-                echo "Checking out branch  ========================================> ${BRANCH_NAME}"
-                git branch: '${BRANCH_NAME}', credentialsId: '2bc605b8-3d32-4c7b-84e2-4d858bc31c46', url: 'https://github.com/gitlabzz/petstore-api-project.git'
-                echo "Check out for '${BRANCH_NAME}' is successfully completed!"
+                branchName = "dev"
+                echo "targeting build for pull request ${pullRequest} to '${branchName}' environment"
             }
+            echo "Check out for pull request '${BRANCH_NAME}' is successfully completed!"
+
+        } else {
+            echo "Checking out branch  ========================================> ${BRANCH_NAME}"
+            git branch: '${BRANCH_NAME}', credentialsId: '2bc605b8-3d32-4c7b-84e2-4d858bc31c46', url: 'https://github.com/gitlabzz/petstore-api-project.git'
+            echo "Check out for '${BRANCH_NAME}' is successfully completed!"
         }
+    }
+
+
+    if (currentBuild.changeSets.size() > 0) {
 
         stage("Prepare Environment (${branchName})") {
             echo "Preparing build environment for branch ---------------------------------> '${branchName}'"
@@ -141,10 +142,10 @@ if (currentBuild.changeSets.size() > 0) {
                 }
             }
         }
+    } else {
+        echo "---------------------------------------------------------------------"
+        echo "--------------------- No Changes Detected ---------------------------"
+        echo "---------------------------------------------------------------------"
+        unstable 'No Changes Detected'
     }
-} else {
-    echo "---------------------------------------------------------------------"
-    echo "--------------------- No Changes Detected ---------------------------"
-    echo "---------------------------------------------------------------------"
-    unstable 'No Changes Detected'
 }
