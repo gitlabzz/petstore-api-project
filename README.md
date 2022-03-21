@@ -18,10 +18,26 @@ export AXWAY_APIM_CLI_HOME=src/main/environments/dev
 - `export APIM_ADMIN_PASSWORD=changeme`
 - `export APIM_ADMIN_USER=apiadmin`
 
+### For Jenkins setup, set environment variables
+
+based on branch, the APIM_*_HOST is mapped to APIM_HOST.
+
+- APIM_DEV_HOST
+- APIM_PROD_HOST
+- APIM_SIT_HOST
+- APIM_UAT_HOST
+
+define credentials for supported environments, the pattern is 'APIM_ADMIN_USERNAME_PASSWORD_*_ENV'
+
+- APIM_ADMIN_USERNAME_PASSWORD_DEV_ENV
+- APIM_ADMIN_USERNAME_PASSWORD_SIT_ENV
+- APIM_ADMIN_USERNAME_PASSWORD_UAT_ENV
+- APIM_ADMIN_USERNAME_PASSWORD_PROD_ENV
+
 #### Import into API Manager
 
 `mvn clean install exec:java@import-api`
 
 #### List published APIs
 
-`mvn clean install exec:java@list-api`
+`mvn clean install exec:java@list-api`za

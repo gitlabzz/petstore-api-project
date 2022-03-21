@@ -1,4 +1,4 @@
-node {
+node('K8S-java') {
 
     def mvnHome
     def branchName
@@ -37,6 +37,7 @@ node {
             echo "Check out for '${BRANCH_NAME}' is successfully completed!"
         }
     }
+
 
     stage("Prepare Environment (${branchName})") {
         echo "Preparing build environment for branch ---------------------------------> '${branchName}'"
@@ -96,7 +97,24 @@ node {
             if (isUnix()) {
                 echo "Publishing to environment: '${branchName}'"
                 env.MAVEN_OPTS = '-Xms256m -Xmx512m -Dlog4j.configurationFile=src/main/resources/log4j/log4j2.xml'
-                sh '"$MVN_HOME/bin/mvn" exec:java@import-api'
+
+                def exitCode = sh(script: '"$MVN_HOME/bin/mvn" exec:java@import-api > commandResult', returnStatus: true)
+                def result = readFile('commandResult').trim()
+
+                if (result.contains("com.axway.apim.lib.errorHandling.AppException: No changes detected between Import- and API-Manager-API")) {
+                    echo "--------------------------------------------------------------------------"
+                    echo "----------------------- Reason for failure: ----------------------------- "
+                    echo "{$result}"
+                    echo "--------------------------------------------------------------------------"
+
+                    // e.g mark build as error
+                    error 'No changes detected between Import- and API-Manager-API'
+                    //unstable 'No changes detected between Import- and API-Manager-API'
+                } else {
+                    echo "--------------------------------------------------------------------------"
+                    echo "-----------------A P I    P U B L I S H E D ------------------------------"
+                    echo "--------------------------------------------------------------------------"
+                }
             }
         }
     }
